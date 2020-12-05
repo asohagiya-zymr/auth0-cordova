@@ -32,7 +32,7 @@ var telemetry = {
 function CordovaAuth(options) {
   this.clientId = options.clientId;
   this.domain = options.domain;
-  this.redirectUri = options.packageIdentifier + '://' + options.domain + '/cordova/' + options.packageIdentifier + '/callback';
+  this.redirectUri = options.callbackURL;;
   this.auth0 = new auth0.WebAuth({
     clientID: this.clientId,
     domain: this.domain

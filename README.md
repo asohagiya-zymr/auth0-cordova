@@ -9,32 +9,31 @@ Library to make it easy to integrate Auth0 login in your Cordova applications.
 The library requires these two cordova plugins to work:
 
 - cordova-plugin-safariviewcontroller: Shows Safari/Chrome browser ViewController/CustomTab
-- cordova-plugin-customurlscheme: Handles the custom scheme url intents for callback
+- ionic-plugin-deeplinks: Handles the deeplink url intents for callback
+
+Follow the ionic-plugin-deeplinks instructions from - https://github.com/ionic-team/ionic-plugin-deeplinks
 
 you'll need to run
 
 ```bash
 cordova plugin add cordova-plugin-safariviewcontroller
-cordova plugin add cordova-plugin-customurlscheme --variable URL_SCHEME={application package name} --variable ANDROID_SCHEME={application package name} --variable ANDROID_HOST={auth0 domain} --variable ANDROID_PATHPREFIX=/cordova/{application package name}/callback
+cordova plugin add ionic-plugin-deeplinks
+--variable URL_SCHEME=myapp --variable DEEPLINK_SCHEME=https --variable DEEPLINK_HOST=example.com
+--variable ANDROID_PATH_PREFIX=/
 ```
 
 > In cordova applications, the application package name is the widget's identifier in `config.xml`
-
-So if you have the following values
-
-* application package name or widget identifier: com.auth0.cordova.example
-* auth0 domain: samples.auth0.com
 
 in your config you should have some entries like
 
 ```xml
 <preference name="AndroidLaunchMode" value="singleTask" />
-<plugin name="cordova-plugin-customurlscheme" spec="~4.2.0">
-    <variable name="URL_SCHEME" value="com.auth0.cordova.example" />
-    <variable name="ANDROID_SCHEME" value="com.auth0.cordova.example" />
-    <variable name="ANDROID_HOST" value="sample.auth0.com" />
-    <variable name="ANDROID_PATHPREFIX" value="/cordova/com.auth0.cordova.example/callback" />
-</plugin>
+ <plugin name="ionic-plugin-deeplinks" spec="^1.0.20">
+        <variable name="URL_SCHEME" value="myapp" />
+        <variable name="DEEPLINK_SCHEME" value="https" />
+        <variable name="DEEPLINK_HOST" value="example.com" />
+        <variable name="ANDROID_PATH_PREFIX" value="/" />
+    </plugin>
 <plugin name="cordova-plugin-safariviewcontroller" spec="~1.4.6" />
 ```
 
@@ -51,13 +50,18 @@ then in your index.js you need to register the url handler `ondeviceready`
 ```js
 var Auth0Cordova = require('@auth0/cordova');
 
-function main() {
-    function handlerUrl(url) {
-        Auth0Cordova.onRedirectUri(url);
+window.addEventListener('deviceready', function() {
+  IonicDeeplink.route({
+    '/product/:productId': {
+      target: 'product',
+      parent: 'products'
     }
-    window.handleOpenURL = handlerUrl;
-    // init your application
-}
+  }, function(match) {
+    Auth0Cordova.onRedirectUri(match.$link.url);
+  }, function(nomatch) {
+    console.warn('No match', nomatch.$link);
+  });
+})
 
 document.addEventListener('deviceready', main);
 ```
@@ -68,6 +72,7 @@ document.addEventListener('deviceready', main);
 const auth0 = new Auth0Cordova({
   domain: "{YOUR_AUTH0_DOMAIN}",
   clientId: "{YOUR_AUTH0_CLIENT_ID}",
+  callbackURL: '{YOUR_CALLBACK_DEEPLINK_URL}',
   packageIdentifier: "{WIDGET_ID_IN_CONFIG_XML}"
 });
 
